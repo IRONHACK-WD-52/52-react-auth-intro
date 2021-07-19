@@ -1,11 +1,19 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { useHistory } from "react-router";
 import axios from "axios";
+
+import { authContext } from "../../contexts/authContext";
 
 import TextInput from "../TextInput";
 
 function Login() {
   const [state, setState] = useState({ email: "", password: "" });
   const [error, setError] = useState(null);
+
+  const history = useHistory();
+
+  // O hook useContext retorna o que está sendo passado para a prop 'value' do componente Provider do Context (ver o arquivo authContext.js linha 9)
+  const { setLoggedInUser } = useContext(authContext);
 
   function handleChange(event) {
     setState({ ...state, [event.target.name]: event.target.value });
@@ -19,6 +27,17 @@ function Login() {
       setError(null);
 
       console.log(response);
+
+      // Atualizando o state do Context para que todos os componentes tenham acesso ao usuário logado
+      setLoggedInUser({ ...response.data });
+
+      // Salvando o usuário no localStorage para persistir a informação no computador do usuário, dessa forma, o usuário pode fechar a janela do site e ainda assim permanecerá logado
+      localStorage.setItem(
+        "loggedInUser",
+        JSON.stringify({ ...response.data }) // O localStorage só aceita armazenar strings, por isso precisamos transformar nosso objeto em JSON
+      );
+
+      history.push("/profile");
     } catch (err) {
       console.log(err.response);
       if (err.response && err.response.data.error) {
